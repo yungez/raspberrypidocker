@@ -1,0 +1,50 @@
+FROM ubuntu
+LABEL description="this image is rapsberry pi ubuntu cross compilation environment, which installed necessary tool chain. Also with build azure iot sdks c."
+
+#those packages are necessary for building azure iot sdk
+RUN apt-get update
+RUN apt-get install -y \
+    build-essential \
+    cmake \
+    curl \
+    git \
+    libcurl4-openssl-dev \
+    libssl-dev \
+    make \
+    pkg-config \
+    uuid-dev \
+    valgrind
+ 
+RUN git clone https://github.com/yungez/rpitools.git
+RUN git clone --recursive https://github.com/Azure/azure-iot-sdks.git
+
+ENV RPI_ROOT ${PWD}/rpitools/raspbian-jessie-sysroot
+
+RUN PATH=$PATH:./rpitools/arm-linux-gnueabihf/bin
+
+# build azure iot sdks
+# generate toolchain-file
+RUN echo 'INCLUDE(CMakeForceCompiler) \n\
+SET(CMAKE_SYSTEM_NAME Linux)     # this one is important \n\
+SET(CMAKE_SYSTEM_VERSION 1)     # this one not so much \n\
+# this is the location of the amd64 toolchain targeting the Raspberry Pi \n\
+SET(CMAKE_C_COMPILER $ENV{RPI_ROOT}/../arm-linux-gnueabihf/bin/arm-linux-gnueabihf-gcc) \n\
+# this is the file system root of the target \n\
+SET(CMAKE_FIND_ROOT_PATH $ENV{RPI_ROOT}) \n\
+# search for programs in the build host directories \n\
+SET(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER) \n\
+# for libraries and headers in the target directories \n\
+SET(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY) \n\
+SET(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)' > toolchain-file-rpi.cmake
+
+RUN ./azure-iot-sdks/c/build_all/linux/build.sh --toolchain-file ./toolchain-file-rpi.cmake -cl --sysroot=$RPI_ROOT --skip-unittests
+
+RUN echo 'alias gcc="arm-linux-gnueabihf-gcc --sysroot=$RPI_ROOT"' >> ~/.bashrc
+
+ENV CC ${PWD}/rpitools/arm-linux-gnueabihf/bin/arm-linux-gnueabihf-gcc
+ENV CXX ${PWD}/rpitools/arm-linux-gnueabihf/bin/arm-linux-gnueabihf-g++
+
+RUN echo clone iot-hub-c-raspberrypi-getting-started
+RUN git clone -b develop --recursive https://github.com/Azure-samples/iot-hub-c-raspberrypi-getting-started.git
+RUN echo build iot-hub-c-raspberrypi-getting-started
+CMD cd iot-hub-c-raspberrypi-getting-started/.misc && ./build.sh --toolchain-file ./toolchain-rpi.cmake -cl --sysroot=$RPI_ROOT --azure-iot-sdks /azure-iot-sdks
