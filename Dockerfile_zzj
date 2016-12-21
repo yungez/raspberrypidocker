@@ -1,0 +1,12 @@
+FROM resin/rpi-raspbian:latest
+
+RUN sh -c "echo 'deb http://ppa.launchpad.net/aziotsdklinux/ppa-azureiot/ubuntu vivid main' >> /etc/apt/sources.list"
+RUN sh -c "echo 'deb-src http://ppa.launchpad.net/aziotsdklinux/ppa-azureiot/ubuntu vivid main' >> /etc/apt/sources.list"
+RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys FDA6A393E4C2257F
+
+RUN apt-get -y update && apt-get install -y \
+  azure-iot-sdk-c-dev \
+  build-essential \
+  cmake \
+  git \
+  wiringpi
