@@ -60,7 +60,7 @@ if [  "$workingdir" != "" ]; then
     dockervoption="-v $workingdir:/source/"
 fi
 
-install dependencies libs to docker images
+#install dependencies libs to docker images
 docker pull $dockerimagename
 containerid="$(docker run -it -d $dockervoption $dockerimagename)"
 echo containderid $containerid
