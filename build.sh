@@ -72,9 +72,9 @@ if [ "$deps" != "" ]; then
     echo -----------------------------
     echo Step 2 install dependencies: $deps
     echo -----------------------------
-    # winpty docker exec -it $containerid apt-get update
+    winpty docker exec -it $containerid apt-get update
     installibs="winpty docker exec -it $containerid apt-get install $deps"    
-    #$installibs
+    $installibs
 fi
 
 # run build command inside docker
