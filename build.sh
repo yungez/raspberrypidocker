@@ -61,19 +61,30 @@ if [  "$workingdir" != "" ]; then
 fi
 
 #install dependencies libs to docker images
-docker pull $dockerimagename
+echo -----------------------------
+echo Step 1 pull docker image $dockerimagename and run it
+echo -----------------------------
+winpty docker pull $dockerimagename
 containerid="$(docker run -it -d $dockervoption $dockerimagename)"
 echo containderid $containerid
 
 if [ "$deps" != "" ]; then
-    installibs="docker exec -it $containerid apt-get update && docker exec -it $containerid apt-get install $deps"    
-    $installibs
+    echo -----------------------------
+    echo Step 2 install dependencies: $deps
+    echo -----------------------------
+    # winpty docker exec -it $containerid apt-get update
+    installibs="winpty docker exec -it $containerid apt-get install $deps"    
+    #$installibs
 fi
 
 # run build command inside docker
 if [ "$buildcmd" != "" ]; then
-    dockerrun="docker exec -it $containerid $buildcmd"
-    $dockerrun
+    echo -----------------------------
+    echo Step 3 run command: $buildcmd
+    echo -----------------------------
+    shcmd="cd /source && $buildcmd"
+    winpty docker exec -it $containerid /bin/sh -c "$shcmd"
+    
 fi
 
 if [ $? -eq 0 ]; then
