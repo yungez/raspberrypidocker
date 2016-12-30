@@ -1,0 +1,4 @@
+{
+  "deps": "wiringPi",
+  "cmd": "gcc ./Lesson1/main.c -o ./Lesson1/lesson1 -lwiringPi"
+}

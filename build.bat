@@ -1,7 +1,7 @@
 @echo off
 setlocal
 
-SET docker="%ProgramFiles%\Docker\Docker\resources\bin\docker.exe"
+SET docker="C:\Program Files\Docker\Docker\resources\bin\docker.exe"
 SET dockerimagename=zhijzhao/raspbian
 
 :arg-loop
@@ -37,17 +37,18 @@ echo Step 1 pull docker image $dockerimagename and run it
 echo -----------------------------
 SET workingdir=%workingdir:\=/%
 SET dockeroption=-v %workingdir%:/source/
+echo %docker% pull %dockerimagename% 
 CALL %docker% pull %dockerimagename%
-echo %docker% run -it -d %dockeroption% %dockerimagename%
-CALL %docker% run -it -d %dockeroption% %dockerimagename% > temp.txt
+echo %docker% run -t -d %dockeroption% %dockerimagename%
+CALL %docker% run -t -d %dockeroption% %dockerimagename% > temp.txt
 SET /p containerid=<temp.txt
 echo containerid %containerid%
 
 IF NOT "%deps%"=="" (
 echo -----------------------------
-echo Step 2 install dependencies: $deps
+echo Step 2 install dependencies: %deps%
 echo -----------------------------
-    rem CALL %docker% exec -it %containerid% apt-get install %deps%
+    CALL %docker% exec -t %containerid% apt-get install %deps%
 )
 
 
@@ -56,7 +57,7 @@ echo Step 3 run command: %buildcmd%
 echo -----------------------------
 SET buildcmd=%buildcmd:"=%
 SET cmds="cd /source &&  %buildcmd%"
-CALL %docker% exec -it %containerid% /bin/sh -c %cmds%
+CALL %docker% exec -t %containerid% /bin/sh -c %cmds%
 
 IF %ERRORLEVEL% EQU 0 (
     ECHO application build succeeded!
