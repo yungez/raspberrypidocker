@@ -55,9 +55,9 @@ echo -----------------------------
 echo -----------------------------
 echo Step 3 run command: %buildcmd%
 echo -----------------------------
-SET buildcmd=%buildcmd:"=%
-SET cmds="cd /source &&  %buildcmd%"
-CALL %docker% exec -t %containerid% /bin/sh -c %cmds%
+SET cmds="cd /source &&  %buildcmd:"=%"
+echo cmds is %cmds%
+CALL %docker% exec -i %containerid% /bin/sh -c %cmds%
 
 IF %ERRORLEVEL% EQU 0 (
     ECHO application build succeeded!
