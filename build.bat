@@ -1,7 +1,7 @@
 @echo off
 setlocal
 
-SET docker="C:\Program Files\Docker\Docker\resources\bin\docker.exe"
+SET docker=docker
 SET dockerimagename=zhijzhao/raspbian
 
 :arg-loop
@@ -40,8 +40,8 @@ SET dockeroption=-v %workingdir%:/source/
 echo %docker% pull %dockerimagename% 
 CALL %docker% pull %dockerimagename%
 echo %docker% run -t -d %dockeroption% %dockerimagename%
-CALL %docker% run -t -d %dockeroption% %dockerimagename% > temp.txt
-SET /p containerid=<temp.txt
+CALL %docker% run -t -d %dockeroption% %dockerimagename% > %workingdir%/temp.txt
+SET /p containerid=<%workingdir%/temp.txt
 echo containerid %containerid%
 
 IF NOT "%deps%"=="" (
