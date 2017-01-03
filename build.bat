@@ -33,7 +33,7 @@ goto :arg-loop
 :arg-done
 
 echo -----------------------------
-echo Step 1 pull docker image $dockerimagename and run it
+echo Step 1 pull docker image %dockerimagename% and run it
 echo -----------------------------
 SET workingdir=%workingdir:\=/%
 SET dockeroption=-v %workingdir%:/source/
