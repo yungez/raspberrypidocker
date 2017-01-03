@@ -60,7 +60,7 @@ echo cmds is %cmds%
 CALL %docker% exec -i %containerid% /bin/sh -c %cmds%
 
 IF %ERRORLEVEL% EQU 0 (
-    ECHO application build succeeded!
+    ECHO Application build succeeded!
 ) ELSE (
-    ECHO application build failed %ERRORLEVEL%
+    ECHO Application build failed %ERRORLEVEL%
 )

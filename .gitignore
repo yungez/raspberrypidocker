@@ -1,5 +1,2 @@
-CMakeFiles
 temp.txt
-*.cmake
-CMakeCache.txt
-lesson1
+build

@@ -1,6 +1,6 @@
 {
   "deps": "wiringPi",
-  "cmd": "cd ./Lesson1 && cmake . && make",
+  "cmd": "cd ./Lesson1 && rm -rf build && mkdir build && cd ./build && cmake .. && make",
   "device_ip": "",
   "user_nmae": "",
   "device_password": "",
