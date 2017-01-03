@@ -1,4 +1,8 @@
 {
   "deps": "wiringPi",
-  "cmd": "gcc ./Lesson1/main.c -o ./Lesson1/lesson1 -lwiringPi"
+  "cmd": "cd ./Lesson1 && cmake . && make",
+  "device_ip": "",
+  "user_nmae": "",
+  "device_password": "",
+  "target_directory": ""
 }
