@@ -1,0 +1,35 @@
+{
+    "name": "azure-iot-development",
+    "displayName": "Azure IoT Development",
+    "description": "support IoT development, including editing and building code, deploying built binary to device and remote debugging ",
+    "version": "0.0.1",
+    "publisher": "zhijunzhao",
+    "engines": {
+        "vscode": "^1.5.0"
+    },
+    "categories": [
+        "Other"
+    ],
+    "activationEvents": [
+        "onCommand:extension.build"
+    ],
+    "main": "./extension",
+    "contributes": {
+        "commands": [{
+            "command": "extension.build",
+            "title": "Azure IoT Build"
+        }]
+    },
+    "scripts": {
+        "postinstall": "node ./node_modules/vscode/bin/install",
+        "test": "node ./node_modules/vscode/bin/test"
+    },
+    "devDependencies": {
+        "typescript": "^2.0.3",
+        "vscode": "^1.0.0",
+        "mocha": "^2.3.3",
+        "eslint": "^3.6.0",
+        "@types/node": "^6.0.40",
+        "@types/mocha": "^2.2.32"
+    }
+}
