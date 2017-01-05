@@ -61,7 +61,7 @@ function activate(context) {
         }
 
         var config = require(vscode.workspace.rootPath + '/config.json');
-        localExecCmd("D:\\raspberrypidocker\\build.bat", ['-deps', config.deps, '-buildcmd', config.cmd, '-workingdir', vscode.workspace.rootPath], outputChannel);  
+        localExecCmd("D:\\raspberrypidocker\\build.bat", ['-deps', config.build_dependencies, '-buildcmd', config.build_commands, '-workingdir', vscode.workspace.rootPath], outputChannel);  
     });
 
     context.subscriptions.push(disposable);

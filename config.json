@@ -1,8 +1,10 @@
 {
-  "deps": "wiringPi",
-  "cmd": "cd ./Lesson1 && rm -rf build && mkdir build && cd ./build && cmake .. && make",
-  "device_ip": "",
-  "user_nmae": "",
-  "device_password": "",
-  "target_directory": ""
+  "build_dependencies": "wiringPi",
+  "build_commands": "cd ./Lesson1 && rm -rf build && mkdir build && cd ./build && cmake .. && make",
+  "deploy_device_ip": "",
+  "deploy_user_name": "",
+  "deploy_device_password": "",
+  "deploy_src_file": "",
+  "deploy_src_folder": "",
+  "deploy_target_folder": ""
 }
