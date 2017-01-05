@@ -13,7 +13,8 @@
     "activationEvents": [
         "onCommand:extension.build",
         "onCommand:extension.intellisense",
-        "onCommand:extension.deploy"
+        "onCommand:extension.deploy",
+        "onCommand:extension.run"
     ],
     "main": "./extension",
     "contributes": {
@@ -29,6 +30,10 @@
             {
                 "command": "extension.deploy",
                 "title": "Azure IoT Deploy"
+            },
+            {
+                "command": "extension.run",
+                "title": "Azure IoT Run"
             }
         ]
     },
@@ -42,6 +47,7 @@
         "mocha": "^2.3.3",
         "eslint": "^3.6.0",
         "scp2": "^0.5.0",
+        "simple-ssh": "^0.9.0",
         "@types/node": "^6.0.40",
         "@types/mocha": "^2.2.32"
     }

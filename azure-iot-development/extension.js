@@ -3,6 +3,7 @@
 var vscode = require('vscode');
 var spawnSync = require('child_process').spawnSync;
 var scp2 = require('scp2');
+var simssh = require('simple-ssh');
 var fs = require('fs');
 var path = require('path');
 
@@ -72,6 +73,51 @@ function uploadFilesViaScp(sourceFileList, targetFileList, config, outputChannel
             uploadFilesViaScp(sourceFileList, targetFileList, cb, outputChannel);
         }
     });
+}
+
+function sshExecCmd(cmd, config, outputChannel, cb) {
+    outputChannel.show();
+    outputChannel.appendLine('-----------------------------');
+    outputChannel.appendLine('Run app on device');
+    outputChannel.appendLine('-----------------------------');
+
+    var sshOptions = {
+        host: config.deploy_device_ip,
+        user: config.deploy_user_name,
+        timeout: 30000
+    };
+
+    if (config.deploy_target_folder) {
+        sshOptions.baseDir = config.deploy_target_folder;
+    }
+
+    if (config.deploy_device_password) {
+        sshOptions.pass = config.deploy_device_password;
+    } else {
+        var err = new Error('No password defined\nFailed command: ' + cmd);
+        err.stack = err.message;
+        cb(err);
+        return;
+    }
+
+    var ssh = new simssh(sshOptions);
+
+    ssh.on('error', function (e) {
+        // when we pass error via deferred.reject, stack will be displayed
+        // as it is just string, we can just replace it with message
+        e.stack = 'ERROR: ' + e.message + '\nFailed command: ' + cmd;
+        outputChannel.appendLine('ERROR OCCURED');
+        cb(e);
+    });
+
+    outputChannel.appendLine('SSH: ' + cmd)
+
+    ssh.exec(cmd, {
+        pty: true,
+        out: function (o) {
+            outputChannel.append(o);
+        }
+    }).start();
 }
 
 function activate(context) {
@@ -158,9 +204,27 @@ function activate(context) {
         uploadFilesViaScp(filesLocal, filesRemote, config, outputChannel);
     });
 
+    let run = vscode.commands.registerCommand('extension.run', function () {
+        // Check docker existence.
+        var dockerVersion = spawnSync('docker', ['-v']);
+        if (String(dockerVersion.stdout).indexOf('Docker version') == -1) {
+            console.log("Docker hasn't been installed yet");
+            vscode.window.showErrorMessage("To run this command, please install Docker first!");
+            return;
+        } else {
+            console.log('Docker exists');
+        }
+
+        var config = require(vscode.workspace.rootPath + '/config.json');
+        var targetFolder = !config.deploy_target_folder ? '.' : config.deploy_target_folder;
+        var startFile = path.join(targetFolder, path.basename(config.deploy_src_file))
+        sshExecCmd('sudo chmod +x ' + startFile + ' ; sudo ./' + startFile, config, outputChannel);
+    });
+
     context.subscriptions.push(build);
     context.subscriptions.push(intellisense);
     context.subscriptions.push(deploy);
+    context.subscriptions.push(run);
 }
 exports.activate = activate;
 
