@@ -1,10 +1,10 @@
 {
   "build_dependencies": "wiringPi",
   "build_commands": "cd ./Lesson1 && rm -rf build && mkdir build && cd ./build && cmake .. && make",
-  "deploy_device_ip": "",
-  "deploy_user_name": "",
-  "deploy_device_password": "",
-  "deploy_src_file": "",
+  "deploy_device_ip": "10.172.15.103",
+  "deploy_user_name": "pi",
+  "deploy_device_password": "raspberry",
+  "deploy_src_file": "D:/raspberrypidocker/Lesson1/build/lesson1",
   "deploy_src_folder": "",
   "deploy_target_folder": ""
 }

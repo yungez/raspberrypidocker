@@ -2,6 +2,9 @@
 // Import the module and reference it with the alias vscode in your code below
 var vscode = require('vscode');
 var spawnSync = require('child_process').spawnSync;
+var scp2 = require('scp2');
+var fs = require('fs');
+var path = require('path');
 
 function localExecCmd(cmd, args, outputChannel, cb) {
     try {
@@ -10,13 +13,13 @@ function localExecCmd(cmd, args, outputChannel, cb) {
         cp.stdout.on('data', function (data) {
             if (outputChannel) {
                 outputChannel.append(String(data));
-                outputChannel.show(); 
+                outputChannel.show();
             }
         });
 
         cp.stderr.on('data', function (data) {
             if (outputChannel) outputChannel.append(String(data));
-        }); 
+        });
 
         cp.on('close', function (code) {
             if (cb) {
@@ -37,19 +40,47 @@ function localExecCmd(cmd, args, outputChannel, cb) {
     }
 }
 
-// this method is called when your extension is activated
-// your extension is activated the very first time the command is executed
-function activate(context) {
+function uploadFilesViaScp(sourceFileList, targetFileList, config, outputChannel, cb) {
+    if (sourceFileList.length == 0) {
+        if (cb) cb();
+        outputChannel.appendLine('-----------------------------');
+        outputChannel.appendLine('Deployment finished');
+        outputChannel.appendLine('-----------------------------');
+        outputChannel.show();
+        return;
+    }
 
-    // Use the console to output diagnostic information (console.log) and errors (console.error)
-    // This line of code will only be executed once when your extension is activated
+    var scpOptions = {
+        host: config.deploy_device_ip,
+        username: config.deploy_user_name,
+        password: config.deploy_device_password,
+        path: targetFileList[0]
+    };
+
+    scp2.scp(sourceFileList[0], scpOptions, function (err) {
+        if (err) {
+            if (cb) {
+                err.stack = "SCP file transfer failed (" + err + ")";
+                cb(err);
+
+                // clear callback, SCP2 seems to be calling error callback twice, and that looks ugly
+                cb = null;
+            }
+        } else {
+            outputChannel.appendLine(' SCP: ' + sourceFileList[0]);
+
+            sourceFileList.splice(0, 1);
+            targetFileList.splice(0, 1);
+            uploadFilesViaScp(sourceFileList, targetFileList, cb, outputChannel);
+        }
+    });
+}
+
+function activate(context) {
     console.log('Congratulations, your extension "azure-iot-development" is now active!');
 
-    // The command has been defined in the package.json file
-    // Now provide the implementation of the command with  registerCommand
-    // The commandId parameter must match the command field in package.json
     var outputChannel = vscode.window.createOutputChannel("Azure IoT build");
-    var disposable = vscode.commands.registerCommand('extension.build', function () {
+    let build = vscode.commands.registerCommand('extension.build', function () {
         // Check docker existence.
         var dockerVersion = spawnSync('docker', ['-v']);
         if (String(dockerVersion.stdout).indexOf('Docker version') == -1) {
@@ -61,14 +92,48 @@ function activate(context) {
         }
 
         var config = require(vscode.workspace.rootPath + '/config.json');
-        localExecCmd("D:\\raspberrypidocker\\build.bat", ['-deps', config.build_dependencies, '-buildcmd', config.build_commands, '-workingdir', vscode.workspace.rootPath], outputChannel);  
+        localExecCmd("D:\\raspberrypidocker\\build.bat", ['-deps', config.build_dependencies, '-buildcmd', config.build_commands, '-workingdir', vscode.workspace.rootPath], outputChannel);
     });
 
-    context.subscriptions.push(disposable);
+    let deploy = vscode.commands.registerCommand('extension.deploy', function () {
+        // Check docker existence.
+        var dockerVersion = spawnSync('docker', ['-v']);
+        if (String(dockerVersion.stdout).indexOf('Docker version') == -1) {
+            console.log("Docker hasn't been installed yet");
+            vscode.window.showErrorMessage("To run this command, please install Docker first!");
+            return;
+        } else {
+            console.log('Docker exists');
+        }
+
+        var filesLocal = [];
+        var filesRemote = [];
+        var config = require(vscode.workspace.rootPath + '/config.json');
+        var targetFolder = !config.deploy_target_folder ? '.' : config.deploy_target_folder;
+        if (config.deploy_src_file) {
+            filesLocal.push(config.deploy_src_file);
+            filesRemote.push(path.join(targetFolder, path.basename(config.deploy_src_file)));
+        }
+
+        if (config.deploy_src_folder) {
+            var files = fs.readdirSync(config.deploy_src_folder);
+            for (var i = 0; i < files.length; i++) {
+                filesLocal.push(path.join(config.deploy_src_folder, files[i]));
+                filesRemote.push(path.join(targetFolder, files[i]));
+            }
+        }
+
+        outputChannel.appendLine('-----------------------------');
+        outputChannel.appendLine('Starting deploy binaries to device via SCP');
+        outputChannel.appendLine('-----------------------------');
+        uploadFilesViaScp(filesLocal, filesRemote, config, outputChannel);
+    });
+
+    context.subscriptions.push(build);
+    context.subscriptions.push(deploy);
 }
 exports.activate = activate;
 
-// this method is called when your extension is deactivated
 function deactivate() {
 }
 exports.deactivate = deactivate;
