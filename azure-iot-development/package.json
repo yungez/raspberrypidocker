@@ -12,6 +12,7 @@
     ],
     "activationEvents": [
         "onCommand:extension.build",
+        "onCommand:extension.intellisense",
         "onCommand:extension.deploy"
     ],
     "main": "./extension",
@@ -20,6 +21,10 @@
             {
                 "command": "extension.build",
                 "title": "Azure IoT Build"
+            },
+            {
+                "command": "extension.intellisense",
+                "title": "Azure IoT IntelliSense"
             },
             {
                 "command": "extension.deploy",

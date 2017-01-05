@@ -35,8 +35,6 @@ function localExecCmd(cmd, args, outputChannel, cb) {
     } catch (e) {
         e.stack = "ERROR: " + e;
         if (cb) cb(e);
-    } finally {
-        if (outputChannel) outputChannel.dispose();
     }
 }
 
@@ -95,6 +93,37 @@ function activate(context) {
         localExecCmd("D:\\raspberrypidocker\\build.bat", ['-deps', config.build_dependencies, '-buildcmd', config.build_commands, '-workingdir', vscode.workspace.rootPath], outputChannel);
     });
 
+    let intellisense = vscode.commands.registerCommand('extension.intellisense', function () {
+        // Check docker existence.
+        var dockerVersion = spawnSync('docker', ['-v']);
+        if (String(dockerVersion.stdout).indexOf('Docker version') == -1) {
+            console.log("Docker hasn't been installed yet");
+            vscode.window.showErrorMessage("To run this command, please install Docker first!");
+            return;
+        } else {
+            console.log('Docker exists');
+        }
+
+        var setupVSCConfig = function () {
+            outputChannel.appendLine('-----------------------------');
+            outputChannel.appendLine('Step 2 Config VSC IntelliSense setting');
+            outputChannel.appendLine('-----------------------------');
+
+            var configJson = {};
+            var platform = {};
+            platform.name = "Win32";
+            platform.includePath = [vscode.workspace.rootPath + "/device/include"];
+            configJson.configurations = [platform];
+            fs.writeFileSync(vscode.workspace.rootPath + '/.vscode/c_cpp_properties.json', JSON.stringify(configJson, null, 2));
+
+            outputChannel.appendLine('-----------------------------');
+            outputChannel.appendLine('IntelliSense setting is done');
+            outputChannel.appendLine('-----------------------------');
+        };
+        var config = require(vscode.workspace.rootPath + '/config.json');
+        localExecCmd("D:\\raspberrypidocker\\IntelliSense.bat", [vscode.workspace.rootPath, config.intellisense_include_folder], outputChannel, setupVSCConfig);
+    });
+
     let deploy = vscode.commands.registerCommand('extension.deploy', function () {
         // Check docker existence.
         var dockerVersion = spawnSync('docker', ['-v']);
@@ -130,6 +159,7 @@ function activate(context) {
     });
 
     context.subscriptions.push(build);
+    context.subscriptions.push(intellisense);
     context.subscriptions.push(deploy);
 }
 exports.activate = activate;
