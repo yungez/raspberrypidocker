@@ -162,9 +162,13 @@ function activate(context) {
             configJson.configurations = [platform];
             fs.writeFileSync(vscode.workspace.rootPath + '/.vscode/c_cpp_properties.json', JSON.stringify(configJson, null, 2));
 
-            outputChannel.appendLine('-----------------------------');
-            outputChannel.appendLine('IntelliSense setting is done');
-            outputChannel.appendLine('-----------------------------');
+            outputChannel.appendLine('Restarting VS Code window...');
+
+            vscode.commands.executeCommand("workbench.action.reloadWindow").then(function () {
+                outputChannel.appendLine('-----------------------------');
+                outputChannel.appendLine('IntelliSense setting is done');
+                outputChannel.appendLine('-----------------------------');
+            });
         };
         var config = require(vscode.workspace.rootPath + '/config.json');
         localExecCmd("D:\\raspberrypidocker\\IntelliSense.bat", [vscode.workspace.rootPath, config.intellisense_include_folder], outputChannel, setupVSCConfig);
