@@ -2,6 +2,7 @@
 // Import the module and reference it with the alias vscode in your code below
 var vscode = require('vscode');
 var spawnSync = require('child_process').spawnSync;
+var execSync = require('child_process').execSync;
 var scp2 = require('scp2');
 var simssh = require('simple-ssh');
 var fs = require('fs');
@@ -120,6 +121,23 @@ function sshExecCmd(cmd, config, outputChannel, cb) {
     }).start();
 }
 
+function cloneDockerRepo(context) {
+    var repoName = 'iotdev-docker';
+    var repoPath = context.extensionPath + '/' + repoName;
+    if (fs.existsSync(repoPath)) {
+        console.log('repo already exists');
+    } else {
+        console.log('repo not exists and clone the repo');
+        console.log('extentsion path: ' + context.extensionPath);
+        try {
+            var log = execSync('git clone https://github.com/yungez/iotdev-docker.git ' + repoPath);
+            console.log(log);
+        } catch (e) {
+            console.log(e);
+        }
+    }
+}
+
 function activate(context) {
     console.log('Congratulations, your extension "azure-iot-development" is now active!');
 
@@ -135,9 +153,49 @@ function activate(context) {
             console.log('Docker exists');
         }
 
-        var config = require(vscode.workspace.rootPath + '/config.json');
-        localExecCmd("D:\\raspberrypidocker\\build.bat", ['-deps', config.build_dependencies, '-buildcmd', config.build_commands, '-workingdir', vscode.workspace.rootPath], outputChannel);
+        cloneDockerRepo(context);
+
+        var configPath = vscode.workspace.rootPath + '/config.json'
+        if (fs.existsSync(configPath)) {
+            var config = require(configPath);
+
+            var repoName = 'iotdev-docker';
+            var repoPath = context.extensionPath + '/' + repoName;
+            var mainPath = repoPath + '/main.bat';
+            localExecCmd(mainPath, ['build', '--device', config.device, '--workingdir', config.workingdir], outputChannel);
+        } else {
+            console.log('config file does not exist');
+        }
     });
+
+    let deploy = vscode.commands.registerCommand('extension.deploy', function () {
+        // Check docker existence.
+        var dockerVersion = spawnSync('docker', ['-v']);
+        if (String(dockerVersion.stdout).indexOf('Docker version') == -1) {
+            console.log("Docker hasn't been installed yet");
+            vscode.window.showErrorMessage("To run this command, please install Docker first!");
+            return;
+        } else {
+            console.log('Docker exists');
+        }
+
+        cloneDockerRepo(context);
+
+        var configPath = vscode.workspace.rootPath + '/config.json'
+        if (fs.existsSync(configPath)) {
+            var config = require(configPath);
+
+            var repoName = 'iotdev-docker';
+            var repoPath = context.extensionPath + '/' + repoName;
+            var mainPath = repoPath + '/main.bat';
+            localExecCmd(mainPath, ['deploy', '--device', config.device, '--workingdir', config.workingdir,
+                '--deviceip', config.deviceip, '--username', config.username, '--password', config.password,
+                '--srcpath', config.srcpath, '--destdir', config.destdir], outputChannel);
+        } else {
+            console.log('config file does not exist');
+        }
+    });
+
 
     let intellisense = vscode.commands.registerCommand('extension.intellisense', function () {
         // Check docker existence.
@@ -172,40 +230,6 @@ function activate(context) {
         };
         var config = require(vscode.workspace.rootPath + '/config.json');
         localExecCmd("D:\\raspberrypidocker\\IntelliSense.bat", [vscode.workspace.rootPath, config.intellisense_include_folder], outputChannel, setupVSCConfig);
-    });
-
-    let deploy = vscode.commands.registerCommand('extension.deploy', function () {
-        // Check docker existence.
-        var dockerVersion = spawnSync('docker', ['-v']);
-        if (String(dockerVersion.stdout).indexOf('Docker version') == -1) {
-            console.log("Docker hasn't been installed yet");
-            vscode.window.showErrorMessage("To run this command, please install Docker first!");
-            return;
-        } else {
-            console.log('Docker exists');
-        }
-
-        var filesLocal = [];
-        var filesRemote = [];
-        var config = require(vscode.workspace.rootPath + '/config.json');
-        var targetFolder = !config.deploy_target_folder ? '.' : config.deploy_target_folder;
-        if (config.deploy_src_file) {
-            filesLocal.push(config.deploy_src_file);
-            filesRemote.push(path.join(targetFolder, path.basename(config.deploy_src_file)));
-        }
-
-        if (config.deploy_src_folder) {
-            var files = fs.readdirSync(config.deploy_src_folder);
-            for (var i = 0; i < files.length; i++) {
-                filesLocal.push(path.join(config.deploy_src_folder, files[i]));
-                filesRemote.push(path.join(targetFolder, files[i]));
-            }
-        }
-
-        outputChannel.appendLine('-----------------------------');
-        outputChannel.appendLine('Starting deploy binaries to device via SCP');
-        outputChannel.appendLine('-----------------------------');
-        uploadFilesViaScp(filesLocal, filesRemote, config, outputChannel);
     });
 
     let run = vscode.commands.registerCommand('extension.run', function () {
