@@ -179,27 +179,21 @@ function activate(context) {
             console.log('Docker exists');
         }
 
-        var filesLocal = [];
-        var filesRemote = [];
-        var config = require(vscode.workspace.rootPath + '/config.json');
-        var targetFolder = !config.deploy_target_folder ? '.' : config.deploy_target_folder;
-        if (config.deploy_src_file) {
-            filesLocal.push(config.deploy_src_file);
-            filesRemote.push(path.join(targetFolder, path.basename(config.deploy_src_file)));
-        }
+        cloneDockerRepo(context);
 
-        if (config.deploy_src_folder) {
-            var files = fs.readdirSync(config.deploy_src_folder);
-            for (var i = 0; i < files.length; i++) {
-                filesLocal.push(path.join(config.deploy_src_folder, files[i]));
-                filesRemote.push(path.join(targetFolder, files[i]));
-            }
-        }
+        var configPath = vscode.workspace.rootPath + '/config.json'
+        if (fs.existsSync(configPath)) {
+            var config = require(configPath);
 
-        outputChannel.appendLine('-----------------------------');
-        outputChannel.appendLine('Starting deploy binaries to device via SCP');
-        outputChannel.appendLine('-----------------------------');
-        uploadFilesViaScp(filesLocal, filesRemote, config, outputChannel);
+            var repoName = 'iotdev-docker';
+            var repoPath = context.extensionPath + '/' + repoName;
+            var mainPath = repoPath + '/main.bat';
+            localExecCmd(mainPath, ['deploy', '--device', config.device, '--workingdir', config.workingdir,
+                '--deviceip', config.deviceip, '--username', config.username, '--password', config.password,
+                '--srcpath', config.srcpath, '--destdir', config.destdir], outputChannel);
+        } else {
+            console.log('config file does not exist');
+        }
     });
 
 
