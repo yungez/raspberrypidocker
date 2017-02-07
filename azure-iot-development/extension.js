@@ -154,8 +154,18 @@ function activate(context) {
         }
 
         cloneDockerRepo(context);
-        // var config = require(vscode.workspace.rootPath + '/config.json');
-        // localExecCmd("D:\\raspberrypidocker\\build.bat", ['-deps', config.build_dependencies, '-buildcmd', config.build_commands, '-workingdir', vscode.workspace.rootPath], outputChannel);
+
+        var configPath = vscode.workspace.rootPath + '/config.json'
+        if (fs.existsSync(configPath)) {
+            var config = require(configPath);
+
+            var repoName = 'iotdev-docker';
+            var repoPath = context.extensionPath + '/' + repoName;
+            var mainPath = repoPath + '/main.bat';
+            localExecCmd(mainPath, ['build', '--device', config.device, '--workingdir', config.workingdir], outputChannel);
+        } else {
+            console.log('config file does not exist');
+        }
     });
 
     let deploy = vscode.commands.registerCommand('extension.deploy', function () {

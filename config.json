@@ -1,5 +1,6 @@
 {
-  "iot_device": "RaspberryPI",
+  "device": "raspberrypi",
+  "workingdir": "D:/iot-hub-c-raspberrypi-getting-started/Lesson1/app",
   "build_dependencies": "wiringPi",
   "build_commands": "cd ./Lesson1 && rm -rf build && mkdir build && cd ./build && cmake .. && make",
   "intellisense_include_folder": "/usr/include",
