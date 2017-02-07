@@ -139,6 +139,41 @@ function activate(context) {
         localExecCmd("D:\\raspberrypidocker\\build.bat", ['-deps', config.build_dependencies, '-buildcmd', config.build_commands, '-workingdir', vscode.workspace.rootPath], outputChannel);
     });
 
+    let deploy = vscode.commands.registerCommand('extension.deploy', function () {
+        // Check docker existence.
+        var dockerVersion = spawnSync('docker', ['-v']);
+        if (String(dockerVersion.stdout).indexOf('Docker version') == -1) {
+            console.log("Docker hasn't been installed yet");
+            vscode.window.showErrorMessage("To run this command, please install Docker first!");
+            return;
+        } else {
+            console.log('Docker exists');
+        }
+
+        var filesLocal = [];
+        var filesRemote = [];
+        var config = require(vscode.workspace.rootPath + '/config.json');
+        var targetFolder = !config.deploy_target_folder ? '.' : config.deploy_target_folder;
+        if (config.deploy_src_file) {
+            filesLocal.push(config.deploy_src_file);
+            filesRemote.push(path.join(targetFolder, path.basename(config.deploy_src_file)));
+        }
+
+        if (config.deploy_src_folder) {
+            var files = fs.readdirSync(config.deploy_src_folder);
+            for (var i = 0; i < files.length; i++) {
+                filesLocal.push(path.join(config.deploy_src_folder, files[i]));
+                filesRemote.push(path.join(targetFolder, files[i]));
+            }
+        }
+
+        outputChannel.appendLine('-----------------------------');
+        outputChannel.appendLine('Starting deploy binaries to device via SCP');
+        outputChannel.appendLine('-----------------------------');
+        uploadFilesViaScp(filesLocal, filesRemote, config, outputChannel);
+    });
+
+
     let intellisense = vscode.commands.registerCommand('extension.intellisense', function () {
         // Check docker existence.
         var dockerVersion = spawnSync('docker', ['-v']);
@@ -172,40 +207,6 @@ function activate(context) {
         };
         var config = require(vscode.workspace.rootPath + '/config.json');
         localExecCmd("D:\\raspberrypidocker\\IntelliSense.bat", [vscode.workspace.rootPath, config.intellisense_include_folder], outputChannel, setupVSCConfig);
-    });
-
-    let deploy = vscode.commands.registerCommand('extension.deploy', function () {
-        // Check docker existence.
-        var dockerVersion = spawnSync('docker', ['-v']);
-        if (String(dockerVersion.stdout).indexOf('Docker version') == -1) {
-            console.log("Docker hasn't been installed yet");
-            vscode.window.showErrorMessage("To run this command, please install Docker first!");
-            return;
-        } else {
-            console.log('Docker exists');
-        }
-
-        var filesLocal = [];
-        var filesRemote = [];
-        var config = require(vscode.workspace.rootPath + '/config.json');
-        var targetFolder = !config.deploy_target_folder ? '.' : config.deploy_target_folder;
-        if (config.deploy_src_file) {
-            filesLocal.push(config.deploy_src_file);
-            filesRemote.push(path.join(targetFolder, path.basename(config.deploy_src_file)));
-        }
-
-        if (config.deploy_src_folder) {
-            var files = fs.readdirSync(config.deploy_src_folder);
-            for (var i = 0; i < files.length; i++) {
-                filesLocal.push(path.join(config.deploy_src_folder, files[i]));
-                filesRemote.push(path.join(targetFolder, files[i]));
-            }
-        }
-
-        outputChannel.appendLine('-----------------------------');
-        outputChannel.appendLine('Starting deploy binaries to device via SCP');
-        outputChannel.appendLine('-----------------------------');
-        uploadFilesViaScp(filesLocal, filesRemote, config, outputChannel);
     });
 
     let run = vscode.commands.registerCommand('extension.run', function () {
