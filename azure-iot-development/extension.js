@@ -2,6 +2,7 @@
 // Import the module and reference it with the alias vscode in your code below
 var vscode = require('vscode');
 var spawnSync = require('child_process').spawnSync;
+var execSync = require('child_process').execSync;
 var scp2 = require('scp2');
 var simssh = require('simple-ssh');
 var fs = require('fs');
@@ -120,6 +121,23 @@ function sshExecCmd(cmd, config, outputChannel, cb) {
     }).start();
 }
 
+function cloneDockerRepo(context) {
+    var repoName = 'iotdev-docker';
+    var repoPath = context.extensionPath + '/' + repoName;
+    if (fs.existsSync(repoPath)) {
+        console.log('repo already exists');
+    } else {
+        console.log('repo not exists and clone the repo');
+        console.log('extentsion path: ' + context.extensionPath);
+        try {
+            var log = execSync('git clone https://github.com/yungez/iotdev-docker.git ' + repoPath);
+            console.log(log);
+        } catch (e) {
+            console.log(e);
+        }
+    }
+}
+
 function activate(context) {
     console.log('Congratulations, your extension "azure-iot-development" is now active!');
 
@@ -135,8 +153,9 @@ function activate(context) {
             console.log('Docker exists');
         }
 
-        var config = require(vscode.workspace.rootPath + '/config.json');
-        localExecCmd("D:\\raspberrypidocker\\build.bat", ['-deps', config.build_dependencies, '-buildcmd', config.build_commands, '-workingdir', vscode.workspace.rootPath], outputChannel);
+        cloneDockerRepo(context);
+        // var config = require(vscode.workspace.rootPath + '/config.json');
+        // localExecCmd("D:\\raspberrypidocker\\build.bat", ['-deps', config.build_dependencies, '-buildcmd', config.build_commands, '-workingdir', vscode.workspace.rootPath], outputChannel);
     });
 
     let deploy = vscode.commands.registerCommand('extension.deploy', function () {
