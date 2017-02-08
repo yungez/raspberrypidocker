@@ -67,7 +67,8 @@ function activate(context) {
             var repoName = 'iotdev-docker';
             var repoPath = context.extensionPath + '/' + repoName;
             var mainPath = repoPath + '/main.bat';
-            localExecCmd(mainPath, ['build', '--device', config.device, '--workingdir', config.workingdir], outputChannel);
+            var workingdir = config.workingdir ? config.workingdir : vscode.workspace.rootPath;
+            localExecCmd(mainPath, ['build', '--device', config.device, '--workingdir', workingdir], outputChannel);
         } else {
             console.log('config file does not exist');
         }
@@ -83,9 +84,12 @@ function activate(context) {
             var repoName = 'iotdev-docker';
             var repoPath = context.extensionPath + '/' + repoName;
             var mainPath = repoPath + '/main.bat';
-            localExecCmd(mainPath, ['deploy', '--device', config.device, '--workingdir', config.workingdir,
+            var workingdir = config.workingdir ? config.workingdir : vscode.workspace.rootPath;
+            var srcpath = config.srcpath ? config.srcpath : vscode.workspace.rootPath;
+            var destdir = config.destdir ? config.destdir : '/home/' + config.username;
+            localExecCmd(mainPath, ['deploy', '--device', config.device, '--workingdir', workingdir,
                 '--deviceip', config.deviceip, '--username', config.username, '--password', config.password,
-                '--srcpath', config.srcpath, '--destdir', config.destdir], outputChannel);
+                '--srcpath', srcpath, '--destdir', destdir], outputChannel);
         } else {
             console.log('config file does not exist');
         }
